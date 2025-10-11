@@ -1,0 +1,77 @@
+import React, { useState, useEffect } from 'react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import StatsCard from '../components/StatsCard';
+import CVESummary from '../components/CVESummary';
+import LogUpload from '../components/LogUpload';
+import ReportUpload from '../components/ReportUpload';
+import { getDashboardStats, getSeverityData } from '../services/api';
+import { ShieldAlert, ShieldCheck, Siren } from 'lucide-react';
+import Loader from '../components/Loader';
+
+const SeverityDonut = () => {
+    const [data, setData] = useState([]);
+    useEffect(() => {
+        getSeverityData().then(setData);
+    }, []);
+
+    if (data.length === 0) return <div className="bg-panel p-6 rounded-lg border border-border flex items-center justify-center h-full"><Loader size={24} text=""/></div>;
+
+    return (
+        <div className="bg-panel p-6 rounded-lg border border-border">
+            <h2 className="text-lg font-semibold text-white mb-4">Severity Breakdown</h2>
+            <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                    <Pie data={data} cx="50%" cy="50%" innerRadius={70} outerRadius={90} fill="#8884d8" paddingAngle={5} dataKey="value">
+                        {data.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.fill} className="focus:outline-none" />
+                        ))}
+                    </Pie>
+                    <Tooltip contentStyle={{ backgroundColor: '#161B22', border: '1px solid #30363d', borderRadius: '0.5rem' }} />
+                    <Legend iconType="circle" />
+                </PieChart>
+            </ResponsiveContainer>
+        </div>
+    );
+};
+
+
+const Dashboard = () => {
+  const [stats, setStats] = useState(null);
+
+  useEffect(() => {
+    getDashboardStats().then(setStats);
+  }, []);
+
+  if (!stats) {
+    return <div className="flex-1 p-6 flex items-center justify-center"><Loader /></div>
+  }
+
+  return (
+    <div className="flex-1 p-6 overflow-y-auto">
+      {/* Stat Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+        <StatsCard title="Total CVEs (Week)" value={stats.totalCVEs} icon={<ShieldCheck size={24} />} />
+        <StatsCard title="IOC Detections (24h)" value={stats.iocDetections} icon={<Siren size={24} />} />
+        <StatsCard title="Critical Alerts" value={stats.criticalAlerts} icon={<ShieldAlert size={24} />} isCritical={true} />
+      </div>
+
+      {/* Main Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+            <CVESummary />
+        </div>
+        <div>
+            <SeverityDonut />
+        </div>
+        <div className="lg:col-span-2">
+            <LogUpload />
+        </div>
+         <div>
+            <ReportUpload />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Dashboard;
