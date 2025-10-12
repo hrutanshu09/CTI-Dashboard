@@ -26,10 +26,6 @@ export const getSeverityData = async () => {
 };
 
 export const getCVEData = async (cveId) => {
-  // In a real app, you would use axios:
-  // const response = await axios.get(`/api/cve/${cveId}`);
-  // return response.data;
-
   return new Promise(resolve => {
     setTimeout(() => {
       if (!cveId) {
@@ -57,4 +53,27 @@ export const analyzeLogFile = async (file) => {
             ]);
         }, 1500);
     });
+};
+
+export const getRecentAlerts = async () => {
+    return new Promise(resolve => {
+        setTimeout(() => {
+            resolve([
+                { timestamp: '2025-10-12 14:15:02', sourceIp: '203.0.113.12', ioc: 'eicar.com.txt', type: 'Hash', severity: 'Critical' },
+                { timestamp: '2025-10-12 11:45:10', sourceIp: '198.51.100.54', ioc: 'bad.evilcorp.com', type: 'URL', severity: 'High' },
+                { timestamp: '2025-10-12 09:21:33', sourceIp: '198.51.100.91', ioc: 'suspicious-login.sh', type: 'Filename', severity: 'High' },
+                { timestamp: '2025-10-11 22:10:05', sourceIp: '192.0.2.88', ioc: '192.0.2.88', type: 'IP', severity: 'Medium' },
+            ]);
+        }, 800);
+    });
+};
+
+// <-- ADD THIS MISSING FUNCTION
+export const getAIResponse = async (prompt) => {
+  console.log("Sending to AI:", prompt);
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve(`This is a mock AI response based on your query: "${prompt}". In a real application, I would provide detailed information about recent threats, summarize the requested CVE, or look up indicators of compromise.`);
+    }, 1500);
+  });
 };
