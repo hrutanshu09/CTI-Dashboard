@@ -14,9 +14,9 @@ const Sidebar = () => {
 
   return (
     <aside className="w-64 bg-panel border-r border-border p-4 flex-col hidden lg:flex">
-      <div className="flex items-center gap-4 mb-10 px-2">
-        <img src="/logo.png" alt="Logo" className="h-12 w-12" />
-        <h1 className="text-xl font-bold text-white">FlashCTI</h1>
+      <div className="flex w-full items-center justify-start gap-0 mb-10 pr-3 -ml-1">
+        <img src="/logo.png" alt="Logo" className="h-16 w-auto object-contain" />
+        <h1 className="brand-font -ml-1 text-xl font-extrabold text-white">FlashCTI</h1>
       </div>
       
       <nav className="flex flex-col gap-2">

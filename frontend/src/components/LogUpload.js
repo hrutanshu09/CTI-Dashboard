@@ -88,10 +88,10 @@ const LogUpload = () => {
         <p className="mt-4 text-sm text-gray-400">
           <span className="font-semibold text-neon-blue">Click to upload</span> or drag and drop.
         </p>
-        <p className="text-xs text-gray-500 mt-1">Supports .log, .txt, .rtf files</p>
+        <p className="text-xs text-gray-500 mt-1">Supports .log, .txt, .rtf, .csv files</p>
         <input
           type="file"
-          accept=".log,.txt,.rtf"
+          accept=".log,.txt,.rtf,.csv"
           className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
           onChange={handleFileUpload}
           disabled={isUploading}
@@ -105,7 +105,7 @@ const LogUpload = () => {
 
         {iocDetails.length > 0 && (
           <div className="mt-6 border border-border rounded-lg p-4 bg-background/40">
-            <h3 className="text-white font-semibold mb-3">Stakeholder-Friendly IOC Brief</h3>
+            <h3 className="text-white font-semibold mb-3">IOC(Indicators of Compromise) Brief</h3>
             <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
               {iocDetails.map((item, index) => (
                 <div key={`${item.indicator}-${index}`} className="border border-border rounded-md p-3 bg-panel/50">
@@ -114,10 +114,6 @@ const LogUpload = () => {
                       <p className="text-sm text-gray-300">
                         IOC: <span className="text-white font-medium break-all">{item.indicator}</span>
                       </p>
-                      <p className="text-xs text-gray-400 mt-1">
-                        Type: {item.iocType} | Occurrences: {item.occurrences} | Sources: {item.sources.join(', ')}
-                        {typeof item.avgScore === 'number' ? ` | Avg Score: ${item.avgScore}` : ''}
-                      </p>
                     </div>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${getSeverityClass(item.topSeverity)}`}>
                       {item.topSeverity}
@@ -125,29 +121,21 @@ const LogUpload = () => {
                   </div>
 
                   <div className="mt-3 bg-background/60 border border-border rounded p-2">
-                    <p className="text-xs text-gray-400">Plain-Language Summary</p>
-                    <p className="text-sm text-gray-200 mt-1">{item.stakeholderSummary}</p>
+                    <p className="text-xs text-gray-400">What Happened</p>
+                    <p className="text-sm text-gray-200 mt-1">{item.whatHappened || item.stakeholderSummary}</p>
                   </div>
 
-                  <div className="mt-3 grid grid-cols-1 lg:grid-cols-3 gap-2">
-                    <div className="bg-background/60 border border-border rounded p-2">
-                      <p className="text-xs text-gray-400">Executive / Management View</p>
-                      <p className="text-sm text-gray-200 mt-1">{item.executiveView}</p>
-                    </div>
-                    <div className="bg-background/60 border border-border rounded p-2">
-                      <p className="text-xs text-gray-400">SOC Analyst View</p>
-                      <p className="text-sm text-gray-200 mt-1">{item.socView}</p>
-                    </div>
-                    <div className="bg-background/60 border border-border rounded p-2">
-                      <p className="text-xs text-gray-400">IT Operations View</p>
-                      <p className="text-sm text-gray-200 mt-1">{item.itOpsView}</p>
-                    </div>
+                  <div className="mt-3 bg-background/60 border border-border rounded p-2">
+                    <p className="text-xs text-gray-400">Why It Matters</p>
+                    <p className="text-sm text-gray-200 mt-1">{item.whyItMatters || item.executiveView}</p>
                   </div>
 
                   <div className="mt-3">
-                    <p className="text-xs text-gray-400">Related IPs</p>
+                    <p className="text-xs text-gray-400">Affected Assets</p>
                     <p className="text-sm text-gray-200 break-all mt-1">
-                      {item.relatedIps.length > 0 ? item.relatedIps.join(', ') : 'No IP extracted from available evidence'}
+                      {Array.isArray(item.affectedAssets)
+                        ? item.affectedAssets.join(', ')
+                        : (item.relatedIps.length > 0 ? item.relatedIps.join(', ') : 'No asset extracted from available evidence')}
                     </p>
                   </div>
 

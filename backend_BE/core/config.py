@@ -10,7 +10,10 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    GEMINI_API_KEY: str
+    LLM_PROVIDER: str = "gemini"
+    OLLAMA_HOST: str = "http://localhost:11434"
+    OLLAMA_MODEL: str = "llama3.2:3b"
+    GEMINI_API_KEY: str | None = None
     NVD_API_KEY: str | None = None
     MODEL_PREFERENCES: list[str] = [
         "models/gemini-2.5-flash",

@@ -193,6 +193,16 @@ export const analyzeLogFile = async (file) => {
                   ).toFixed(4)
                 )
               : null,
+          whatHappened:
+            `Indicator "${item.indicator}" appeared ${item.occurrences} time(s) with ${topSeverity} risk.`,
+          whyItMatters:
+            topSeverity === 'Critical' || topSeverity === 'High'
+              ? 'This could indicate active malicious activity and may impact business operations if not contained quickly.'
+              : 'This is a moderate risk signal that should be monitored and remediated before it escalates.',
+          affectedAssets:
+            item.relatedIps.length > 0
+              ? item.relatedIps
+              : ['No specific IP asset extracted from the current evidence'],
           stakeholderSummary:
             `Indicator "${item.indicator}" was detected ${item.occurrences} time(s) from ${item.sources.join(', ')} with ${topSeverity} risk.`,
           executiveView:

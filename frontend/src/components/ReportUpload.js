@@ -98,8 +98,6 @@ const ReportUpload = () => {
 
   const iocs = analysisPayload?.iocs || {};
   const analysis = analysisPayload?.analysis || {};
-  const severity = analysisPayload?.severity || 'Unknown';
-  const ingest = analysisPayload?.ingest || null;
 
   const summaryLines = Array.isArray(analysis.summary_lines) ? analysis.summary_lines : [];
   const threatTypes = Array.isArray(analysis.threat_types) ? analysis.threat_types : [];
@@ -109,8 +107,6 @@ const ReportUpload = () => {
   const actionsImmediate = Array.isArray(analysis.actions_immediate) ? analysis.actions_immediate : [];
   const actions24h = Array.isArray(analysis.actions_24h) ? analysis.actions_24h : [];
   const actions7d = Array.isArray(analysis.actions_7d) ? analysis.actions_7d : [];
-  const sourceTrace = Array.isArray(analysis.source_trace) ? analysis.source_trace : [];
-  const confidence = analysis.confidence || {};
 
   return (
     <div className="bg-panel p-6 rounded-lg border border-border h-full flex flex-col">
@@ -148,23 +144,6 @@ const ReportUpload = () => {
 
         {analysisPayload && (
           <div className="space-y-4">
-            <div className="border border-border rounded-lg p-4 bg-background/40">
-              <h3 className="text-white font-semibold">Report Analysis</h3>
-              <p className="text-sm text-gray-300 mt-2">
-                Severity: <span className="text-white font-medium">{severity}</span>
-              </p>
-              <p className="text-xs text-gray-400 mt-1">Report ID: {reportId || 'N/A'}</p>
-              {ingest && (
-                <p className="text-xs text-gray-400 mt-1">
-                  Ingest: {ingest.already_ingested ? 'Already indexed' : 'Newly indexed'} | New chunks: {ingest.new_chunks_added} | Total chunks for report: {ingest.total_chunks_for_report}
-                </p>
-              )}
-              <p className="text-xs text-gray-400 mt-1">
-                Confidence: <span className="text-white">{typeof confidence.score === 'number' ? confidence.score : 'N/A'}</span>
-                {confidence.rationale ? ` | ${confidence.rationale}` : ''}
-              </p>
-            </div>
-
             <div className="border border-border rounded-lg p-4 bg-background/40">
               <h3 className="text-white font-semibold">Executive Summary (4-6 Lines)</h3>
               {summaryLines.length > 0 ? (
@@ -302,23 +281,6 @@ const ReportUpload = () => {
                 </table>
               </div>
             </div>
-
-            {sourceTrace.length > 0 && (
-              <div className="border border-border rounded-lg p-4 bg-background/40">
-                <h3 className="text-white font-semibold">Source Transparency (Analysis Stage)</h3>
-                <div className="mt-2 space-y-2 max-h-[220px] overflow-y-auto pr-1">
-                  {sourceTrace.map((s, idx) => (
-                    <div key={`trace-${idx}`} className="border border-border rounded p-2 bg-panel/40">
-                      <p className="text-xs text-gray-300">
-                        S{s.id} | Scope: <span className="text-white">{s.scope}</span> | Source: <span className="text-white">{s.source}</span>
-                        {s.label ? ` | Label: ${s.label}` : ''}
-                      </p>
-                      <p className="text-xs text-gray-400 mt-1 whitespace-pre-wrap">{s.snippet}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
 
             <div className="border border-border rounded-lg p-4 bg-background/40">
               <h3 className="text-white font-semibold mb-3">Further Query</h3>

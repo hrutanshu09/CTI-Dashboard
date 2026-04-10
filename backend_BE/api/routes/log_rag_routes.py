@@ -10,7 +10,7 @@ import logging
 
 router = APIRouter(prefix="/logs", tags=["Log RAG"])
 logger = logging.getLogger(__name__)
-SUPPORTED_TYPES = [".log", ".txt", ".rtf"]
+SUPPORTED_TYPES = [".log", ".txt", ".rtf", ".csv"]
 
 class LogQuery(BaseModel):
     query: str
