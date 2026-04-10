@@ -16,35 +16,37 @@ const SeverityDonut = ({ refreshKey = 0 }) => {
 
     if (data.length === 0) {
         return (
-            <div className="bg-panel p-6 rounded-lg border border-border flex items-center justify-center h-full">
+            <div className="bg-panel p-5 rounded-lg border border-border w-[320px] h-[320px] flex items-center justify-center shrink-0">
                 <Loader size={24} text=""/>
             </div>
         );
     }
 
     return (
-        <div className="bg-panel p-6 rounded-lg border border-border h-full">
-            <h2 className="text-lg font-semibold text-white mb-4">Severity Breakdown</h2>
-            <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                    <Pie 
-                        data={data} 
-                        cx="50%" 
-                        cy="50%" 
-                        innerRadius={70} 
-                        outerRadius={90} 
-                        fill="#8884d8" 
-                        paddingAngle={5} 
-                        dataKey="value"
-                    >
-                        {data.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.fill} className="focus:outline-none" />
-                        ))}
-                    </Pie>
-                    <Tooltip contentStyle={{ backgroundColor: '#161B22', border: '1px solid #30363d', borderRadius: '0.5rem' }} />
-                    <Legend iconType="circle" />
-                </PieChart>
-            </ResponsiveContainer>
+        <div className="bg-panel p-5 rounded-lg border border-border w-[320px] h-[320px] flex flex-col shrink-0">
+            <h2 className="text-lg font-semibold text-white mb-2">Severity Breakdown</h2>
+            <div className="flex-1 min-h-0">
+              <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                      <Pie 
+                          data={data} 
+                          cx="50%" 
+                          cy="42%" 
+                          innerRadius={42} 
+                          outerRadius={62} 
+                          fill="#8884d8" 
+                          paddingAngle={5} 
+                          dataKey="value"
+                      >
+                          {data.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.fill} className="focus:outline-none" />
+                          ))}
+                      </Pie>
+                      <Tooltip contentStyle={{ backgroundColor: '#161B22', border: '1px solid #30363d', borderRadius: '0.5rem' }} />
+                      <Legend verticalAlign="bottom" align="center" iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
+                  </PieChart>
+              </ResponsiveContainer>
+            </div>
         </div>
     );
 };
@@ -111,7 +113,7 @@ const Dashboard = () => {
         </div>
 
         {/* Severity Breakdown Chart */}
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 flex justify-center">
           <SeverityDonut refreshKey={refreshKey} />
         </div>
       </div>

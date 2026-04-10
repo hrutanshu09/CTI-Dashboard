@@ -15,6 +15,12 @@ class Settings(BaseSettings):
     OLLAMA_MODEL: str = "llama3.2:3b"
     GEMINI_API_KEY: str | None = None
     NVD_API_KEY: str | None = None
+    GOOGLE_CLIENT_ID: str | None = None
+    AUTH_SESSION_SECRET: str = "change-me-in-production"
+    AUTH_COOKIE_NAME: str = "cti_session"
+    AUTH_COOKIE_SECURE: bool = False
+    AUTH_SESSION_DAYS: int = 7
+    FRONTEND_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
     MODEL_PREFERENCES: list[str] = [
         "models/gemini-2.5-flash",
         "models/gemini-1.5-pro",

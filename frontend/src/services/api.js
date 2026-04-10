@@ -1,7 +1,9 @@
 import axios from 'axios';
 
 // The base URL for your backend server
-const API_BASE_URL = 'http://127.0.0.1:8000';
+axios.defaults.withCredentials = true;
+
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://127.0.0.1:8000';
 const LOG_API_BASE_URL = process.env.REACT_APP_LOG_API_BASE_URL || 'http://127.0.0.1:8001';
 const THREAT_REPORT_API_BASE_URL =
   process.env.REACT_APP_THREAT_REPORT_API_BASE_URL || LOG_API_BASE_URL;
