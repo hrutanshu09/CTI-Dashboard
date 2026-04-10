@@ -11,6 +11,15 @@ const LogUpload = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [isQuerying, setIsQuerying] = useState(false);
 
+  const getScenarioDescription = (evidenceText) => {
+    const text = String(evidenceText || '');
+    const match = text.match(/Scenario Description:\s*([^|]+?)(?=(?:\s+\w[\w\s]*:)|$)/i);
+    if (match?.[1]) {
+      return match[1].trim();
+    }
+    return text;
+  };
+
   const getSeverityClass = (severity) => {
     switch (String(severity).toLowerCase()) {
       case 'critical':
@@ -122,7 +131,7 @@ const LogUpload = () => {
 
                   <div className="mt-3 bg-background/60 border border-border rounded p-2">
                     <p className="text-xs text-gray-400">What Happened</p>
-                    <p className="text-sm text-gray-200 mt-1">{item.whatHappened || item.stakeholderSummary}</p>
+                    <p className="text-sm text-gray-200 mt-1 whitespace-pre-wrap">{item.whatHappened || item.stakeholderSummary}</p>
                   </div>
 
                   <div className="mt-3 bg-background/60 border border-border rounded p-2">
@@ -157,7 +166,7 @@ const LogUpload = () => {
                             Chunk {example.chunkId} | IP: <span className="text-white font-mono">{example.ip}</span>
                             {typeof example.score === 'number' ? ` | Score: ${example.score}` : ''}
                           </p>
-                          <p className="text-xs text-gray-400 mt-1 whitespace-pre-wrap">{example.evidence}</p>
+                          <p className="text-xs text-gray-400 mt-1 whitespace-pre-wrap">{getScenarioDescription(example.evidence)}</p>
                         </div>
                       ))}
                     </div>
