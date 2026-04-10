@@ -1,0 +1,44 @@
+# -----------------------------
+# Backend (Python/FastAPI) Ignore Rules
+# -----------------------------
+
+# Bytecode / caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Virtual environments
+venv/
+.venv/
+env/
+myenv/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Coverage / test artifacts
+.coverage
+coverage.xml
+htmlcov/
+
+# Runtime/temp
+logs/
+tmp/
+temp/
+*.log
+
+# Build/dist
+build/
+dist/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

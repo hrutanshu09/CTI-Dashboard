@@ -1,0 +1,65 @@
+# -----------------------------
+# Global Repository Ignore Rules
+# -----------------------------
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git recovery/backups
+.git_old_backup/
+.git_corrupt_backup/
+
+# Logs
+*.log
+logs/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+!**/.env.example
+
+# Python artifacts
+**/__pycache__/
+**/*.py[cod]
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/.ipynb_checkpoints/
+**/.venv/
+**/venv/
+**/env/
+**/myenv/
+
+# Node artifacts
+**/node_modules/
+**/.cache/
+**/.eslintcache
+
+# Frontend build outputs
+frontend/build/
+frontend/coverage/
+
+# Backend local environments
+backend_BE/venv/
+backend_BE/.venv/
+backend_BE/env/
+backend_BE/myenv/
+
+# Backend large/local data artifacts
+backend_BE/data/
+backend_BE/rag_store/*
+!backend_BE/rag_store/.gitkeep
+
+# Backend evaluation generated outputs
+backend_BE/evaluation/results/*
+!backend_BE/evaluation/results/.gitkeep
+backend_BE/rag_store_backup_*/
+
+.git_corrupt_backup/
+.git_old_backup/
