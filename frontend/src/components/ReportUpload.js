@@ -8,7 +8,7 @@ import {
 import { useModuleState } from '../context/ModuleStateContext';
 
 const ReportUpload = () => {
-  const { moduleState, setModuleState } = useModuleState('reporting');
+  const { moduleState, setModuleState, resetModuleState } = useModuleState('reporting');
   const {
     error,
     queryError,
@@ -114,7 +114,17 @@ const ReportUpload = () => {
 
   return (
     <div className="bg-panel p-6 rounded-lg border border-border h-full flex flex-col">
-      <h2 className="text-lg font-semibold text-white mb-4">Upload Threat Report</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold text-white">Upload Threat Report</h2>
+        <button
+          type="button"
+          onClick={resetModuleState}
+          className="text-xs px-3 py-1 rounded-md border border-border text-gray-300 hover:text-white hover:border-neon-blue transition-colors"
+          disabled={isUploading || isQuerying}
+        >
+          Clear
+        </button>
+      </div>
 
       <div className="relative border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-neon-blue transition-colors">
         <FileUp className="mx-auto h-12 w-12 text-gray-500" />

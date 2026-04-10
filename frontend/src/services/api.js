@@ -5,6 +5,8 @@ const API_BASE_URL = 'http://127.0.0.1:8000';
 const LOG_API_BASE_URL = process.env.REACT_APP_LOG_API_BASE_URL || 'http://127.0.0.1:8001';
 const THREAT_REPORT_API_BASE_URL =
   process.env.REACT_APP_THREAT_REPORT_API_BASE_URL || LOG_API_BASE_URL;
+const DASHBOARD_API_BASE_URL =
+  process.env.REACT_APP_DASHBOARD_API_BASE_URL || LOG_API_BASE_URL;
 
 // --- Functions that call the new backend ---
 
@@ -40,24 +42,25 @@ export const getAIResponse = async (prompt) => {
 // --- Keep the existing mock functions for other features ---
 
 export const getDashboardStats = async () => {
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve({ totalCVEs: 142, iocDetections: 78, criticalAlerts: 9 });
-    }, 500);
-  });
+  try {
+    const response = await axios.get(`${DASHBOARD_API_BASE_URL}/dashboard/stats`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching dashboard stats:', error);
+    return { totalCVEs: 0, iocDetections: 0, criticalAlerts: 0 };
+  }
 };
 
 export const getSeverityData = async () => {
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve([
-        { name: 'Critical', value: 15, fill: '#FF3131' },
-        { name: 'High', value: 45, fill: '#FFA500' },
-        { name: 'Medium', value: 70, fill: '#FFD700' },
-        { name: 'Low', value: 20, fill: '#00BFFF' },
-      ]);
-    }, 500);
-  });
+  try {
+    const response = await axios.get(`${DASHBOARD_API_BASE_URL}/dashboard/severity`, {
+      params: { range: '30d' },
+    });
+    return Array.isArray(response.data) ? response.data : [];
+  } catch (error) {
+    console.error('Error fetching severity breakdown:', error);
+    return [];
+  }
 };
 
 export const analyzeLogFile = async (file) => {
@@ -292,16 +295,27 @@ export const queryThreatReportInsights = async ({ query, reportId, mode = 'hybri
     throw new Error('Failed to query threat report insights.');
   }
 };
-export const getRecentAlerts = async () => {
-    return new Promise(resolve => {
-        setTimeout(() => {
-            resolve([
-                { timestamp: '2025-10-12 14:15:02', sourceIp: '203.0.113.12', ioc: 'eicar.com.txt', type: 'Hash', severity: 'Critical' },
-                { timestamp: '2025-10-12 11:45:10', sourceIp: '198.51.100.54', ioc: 'bad.evilcorp.com', type: 'URL', severity: 'High' },
-                { timestamp: '2025-10-12 09:21:33', sourceIp: '198.51.100.91', ioc: 'suspicious-login.sh', type: 'Filename', severity: 'High' },
-                { timestamp: '2025-10-11 22:10:05', sourceIp: '192.0.2.88', ioc: '192.0.2.88', type: 'IP', severity: 'Medium' },
-            ]);
-        }, 800);
+export const getRecentAlerts = async (limit = 10) => {
+  try {
+    const response = await axios.get(`${DASHBOARD_API_BASE_URL}/dashboard/recent-alerts`, {
+      params: { limit },
     });
+    return Array.isArray(response.data) ? response.data : [];
+  } catch (error) {
+    console.error('Error fetching recent alerts:', error);
+    return [];
+  }
+};
+
+export const clearDashboardMetrics = async (source = 'all') => {
+  try {
+    const response = await axios.delete(`${DASHBOARD_API_BASE_URL}/dashboard/clear`, {
+      params: { source },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error clearing dashboard metrics:', error);
+    throw new Error('Failed to clear dashboard metrics.');
+  }
 };
 

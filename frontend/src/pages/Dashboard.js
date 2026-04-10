@@ -2,17 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import StatsCard from '../components/StatsCard';
 import ThreatTable from '../components/ThreatTable';
-import { getDashboardStats, getRecentAlerts, getSeverityData } from '../services/api';
+import { clearDashboardMetrics, getDashboardStats, getRecentAlerts, getSeverityData } from '../services/api';
 import { ShieldAlert, ShieldCheck, Siren } from 'lucide-react';
 import Loader from '../components/Loader';
 
 // Component for the Donut Chart
-const SeverityDonut = () => {
+const SeverityDonut = ({ refreshKey = 0 }) => {
     const [data, setData] = useState([]);
 
     useEffect(() => {
         getSeverityData().then(setData);
-    }, []);
+    }, [refreshKey]);
 
     if (data.length === 0) {
         return (
@@ -53,11 +53,26 @@ const SeverityDonut = () => {
 const Dashboard = () => {
   const [stats, setStats] = useState(null);
   const [alerts, setAlerts] = useState([]);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  useEffect(() => {
+  const loadDashboardData = () => {
     getDashboardStats().then(setStats);
     getRecentAlerts().then(setAlerts);
+  };
+
+  useEffect(() => {
+    loadDashboardData();
   }, []);
+
+  const handleClearDashboard = async () => {
+    try {
+      await clearDashboardMetrics('all');
+      loadDashboardData();
+      setRefreshKey((prev) => prev + 1);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   if (!stats) {
     return <div className="flex-1 p-6 flex items-center justify-center"><Loader /></div>
@@ -65,7 +80,16 @@ const Dashboard = () => {
 
   return (
     <div className="flex-1 p-6 overflow-y-auto">
-      <h1 className="text-2xl font-bold text-white mb-6">Dashboard</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-white">Dashboard</h1>
+        <button
+          type="button"
+          onClick={handleClearDashboard}
+          className="text-xs px-3 py-1 rounded-md border border-border text-gray-300 hover:text-white hover:border-neon-blue transition-colors"
+        >
+          Clear
+        </button>
+      </div>
       
       {/* Threat Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
@@ -88,7 +112,7 @@ const Dashboard = () => {
 
         {/* Severity Breakdown Chart */}
         <div className="lg:col-span-1">
-          <SeverityDonut />
+          <SeverityDonut refreshKey={refreshKey} />
         </div>
       </div>
     </div>

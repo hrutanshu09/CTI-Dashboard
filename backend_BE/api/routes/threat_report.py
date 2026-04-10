@@ -10,6 +10,7 @@ from services.report_processing import (
     normalize_report,
     process_report_chunks,
 )
+from services.dashboard_metrics_service import metrics_store
 import logging
 
 try:
@@ -91,6 +92,16 @@ async def analyze_threat_report(file: UploadFile = File(...)):
             report_id=ingest["report_id"],
             retrieval_mode="hybrid",
         )
+        try:
+            metrics_store.record_threat_report_analysis(
+                filename=file.filename or "uploaded_report",
+                report_id=ingest["report_id"],
+                severity=result.get("severity", "Unknown"),
+                iocs=result.get("iocs", {}),
+                analysis=result.get("analysis", {}),
+            )
+        except Exception:
+            logger.exception("Dashboard metrics ingestion failed for threat report: %s", file.filename)
 
         return {
             "status": "success",

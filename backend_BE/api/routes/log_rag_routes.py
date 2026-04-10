@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from services.rag_services import analyze_threat
 from striprtf.striprtf import rtf_to_text
 from utils.log_processing import normalize_logs, chunk_logs,process_log_chunks
+from services.dashboard_metrics_service import metrics_store
 import logging
 
 
@@ -57,6 +58,13 @@ async def analyze_log(file: UploadFile = File(...)):
 
         # ---------- Send to RAG ----------
         result = process_log_chunks(chunks)
+        try:
+            metrics_store.record_log_analysis(
+                filename=file.filename or "uploaded_log",
+                chunk_results=result,
+            )
+        except Exception:
+            logger.exception("Dashboard metrics ingestion failed for log file: %s", file.filename)
 
         return {
             "status": "success",

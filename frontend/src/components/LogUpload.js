@@ -6,7 +6,7 @@ import { analyzeLogFile, queryLogInsights } from '../services/api';
 import { useModuleState } from '../context/ModuleStateContext';
 
 const LogUpload = () => {
-  const { moduleState, setModuleState } = useModuleState('logAnalyzer');
+  const { moduleState, setModuleState, resetModuleState } = useModuleState('logAnalyzer');
   const { results, iocDetails, query, queryResponse, queryError, error } = moduleState;
   const [isUploading, setIsUploading] = useState(false);
   const [isQuerying, setIsQuerying] = useState(false);
@@ -72,7 +72,17 @@ const LogUpload = () => {
 
   return (
     <div className="bg-panel p-6 rounded-lg border border-border h-full flex flex-col">
-      <h2 className="text-lg font-semibold text-white mb-4">Log Analyzer</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold text-white">Log Analyzer</h2>
+        <button
+          type="button"
+          onClick={resetModuleState}
+          className="text-xs px-3 py-1 rounded-md border border-border text-gray-300 hover:text-white hover:border-neon-blue transition-colors"
+          disabled={isUploading || isQuerying}
+        >
+          Clear
+        </button>
+      </div>
       <div className="relative border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-neon-blue transition-colors">
         <UploadCloud className="mx-auto h-12 w-12 text-gray-500" />
         <p className="mt-4 text-sm text-gray-400">

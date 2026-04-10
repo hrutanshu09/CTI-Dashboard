@@ -5,7 +5,7 @@ import MarkdownRenderer from '../components/MarkdownRenderer'; // <-- CORRECTED 
 import { useModuleState } from '../context/ModuleStateContext';
 
 const AIAssistantPage = () => {
-  const { moduleState, setModuleState } = useModuleState('aiAssistant');
+  const { moduleState, setModuleState, resetModuleState } = useModuleState('aiAssistant');
   const { messages, input } = moduleState;
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
@@ -39,7 +39,17 @@ const AIAssistantPage = () => {
 
   return (
     <div className="flex flex-col h-full p-6 bg-background">
-      <h1 className="text-2xl font-bold text-white mb-4">AI Assistant</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-bold text-white">AI Assistant</h1>
+        <button
+          type="button"
+          onClick={resetModuleState}
+          className="text-xs px-3 py-1 rounded-md border border-border text-gray-300 hover:text-white hover:border-neon-blue transition-colors"
+          disabled={isLoading}
+        >
+          Clear
+        </button>
+      </div>
       
       <div className="flex-1 overflow-y-auto pr-4 space-y-6">
         {messages.map((msg, index) => (

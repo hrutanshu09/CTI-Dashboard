@@ -28,7 +28,7 @@ const useTypingEffect = (text = '', speed = 20) => {
 };
 
 const CVESummary = () => {
-    const { moduleState, setModuleState } = useModuleState('threatIntel');
+    const { moduleState, setModuleState, resetModuleState } = useModuleState('threatIntel');
     const { cveId, cveData, error } = moduleState;
     const [isLoading, setIsLoading] = useState(false);
     const summaryText = useTypingEffect(cveData?.ai_summary);
@@ -56,7 +56,17 @@ const CVESummary = () => {
     return (
         
         <div className="bg-panel p-6 rounded-lg border border-border h-full flex flex-col">
-            <h2 className="text-lg font-semibold text-white mb-4">CVE Lookup & AI Summary</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-white">CVE Lookup & AI Summary</h2>
+              <button
+                type="button"
+                onClick={resetModuleState}
+                className="text-xs px-3 py-1 rounded-md border border-border text-gray-300 hover:text-white hover:border-neon-blue transition-colors"
+                disabled={isLoading}
+              >
+                Clear
+              </button>
+            </div>
             <form onSubmit={handleSearch} className="flex gap-2 mb-4">
                 <input
                     type="text"
