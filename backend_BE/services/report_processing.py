@@ -7,6 +7,7 @@ import hashlib
 import json
 import logging
 import re
+from ast import literal_eval
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
@@ -246,24 +247,101 @@ def _extract_json_object(text: str) -> Dict[str, Any]:
         return {}
 
     text = text.strip()
+    parsed = _try_parse_json_dict(text)
+    if parsed:
+        return parsed
+
+    # Parse common markdown fenced JSON blocks first.
+    for fenced in re.findall(r"```(?:json)?\s*([\s\S]*?)```", text, flags=re.IGNORECASE):
+        parsed = _try_parse_json_dict(fenced)
+        if parsed:
+            return parsed
+
+    first = text.find("{")
+    last = text.rfind("}")
+    if first != -1 and last != -1 and last > first:
+        parsed = _try_parse_json_dict(text[first : last + 1])
+        if parsed:
+            return parsed
+
+    # Last resort: scan for balanced {...} candidates and parse the first valid one.
+    for candidate in _iter_braced_candidates(text):
+        parsed = _try_parse_json_dict(candidate)
+        if parsed:
+            return parsed
+
+    logger.warning("Could not parse JSON object from model output")
+    return {}
+
+
+def _try_parse_json_dict(candidate: str) -> Dict[str, Any]:
+    cleaned = candidate.strip()
+    if not cleaned:
+        return {}
+
+    # Normalize common typography from model outputs.
+    cleaned = (
+        cleaned.replace("\u201c", '"')
+        .replace("\u201d", '"')
+        .replace("\u2018", "'")
+        .replace("\u2019", "'")
+    )
+
     try:
-        parsed = json.loads(text)
+        parsed = json.loads(cleaned)
         return parsed if isinstance(parsed, dict) else {}
     except Exception:
         pass
 
-    first = text.find("{")
-    last = text.rfind("}")
-    if first == -1 or last == -1 or last <= first:
-        return {}
+    # Tolerate trailing commas in JSON-like content.
+    no_trailing_commas = re.sub(r",\s*([}\]])", r"\1", cleaned)
+    if no_trailing_commas != cleaned:
+        try:
+            parsed = json.loads(no_trailing_commas)
+            return parsed if isinstance(parsed, dict) else {}
+        except Exception:
+            pass
 
-    candidate = text[first : last + 1]
+    # Handle Python-dict style model output (single quotes/True/None).
     try:
-        parsed = json.loads(candidate)
+        parsed = literal_eval(cleaned)
         return parsed if isinstance(parsed, dict) else {}
     except Exception:
-        logger.warning("Could not parse JSON object from model output")
         return {}
+
+
+def _iter_braced_candidates(text: str) -> List[str]:
+    candidates: List[str] = []
+    n = len(text)
+    for start in range(n):
+        if text[start] != "{":
+            continue
+
+        depth = 0
+        in_string = False
+        escaped = False
+
+        for end in range(start, n):
+            ch = text[end]
+            if in_string:
+                if escaped:
+                    escaped = False
+                elif ch == "\\":
+                    escaped = True
+                elif ch == '"':
+                    in_string = False
+                continue
+
+            if ch == '"':
+                in_string = True
+            elif ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+                if depth == 0:
+                    candidates.append(text[start : end + 1])
+                    break
+    return candidates
 
 
 def _build_source_trace(retrieved_docs: List[Dict[str, Any]], report_id: Optional[str]) -> List[Dict[str, Any]]:

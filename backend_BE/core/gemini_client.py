@@ -1,5 +1,6 @@
 import httpx
 import google.generativeai as genai
+from openai import OpenAI
 from core.config import settings
 
 
@@ -20,6 +21,25 @@ def _generate_with_ollama(prompt: str) -> str:
         return str(data.get("response", "")).strip()
     except Exception as e:
         raise RuntimeError(f"Ollama generation failed: {str(e)}")
+
+
+def _generate_with_groq(prompt: str) -> str:
+    if not settings.GROQ_API_KEY:
+        raise RuntimeError("GROQ_API_KEY is not configured")
+
+    try:
+        client = OpenAI(
+            api_key=settings.GROQ_API_KEY,
+            base_url="https://api.groq.com/openai/v1",
+        )
+        response = client.chat.completions.create(
+            model=settings.GROQ_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.2,
+        )
+        return str(response.choices[0].message.content or "").strip()
+    except Exception as e:
+        raise RuntimeError(f"Groq generation failed: {str(e)}")
 
 
 def _initialize_gemini_model():
@@ -52,7 +72,9 @@ def _generate_with_gemini(prompt: str) -> str:
 
 
 def generate(prompt: str) -> str:
-    provider = (settings.LLM_PROVIDER or "gemini").strip().lower()
+    provider = (settings.LLM_PROVIDER or "groq").strip().lower()
+    if provider == "groq":
+        return _generate_with_groq(prompt)
     if provider == "ollama":
         return _generate_with_ollama(prompt)
     return _generate_with_gemini(prompt)

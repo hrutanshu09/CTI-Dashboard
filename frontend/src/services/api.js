@@ -36,6 +36,9 @@ export const getAIResponse = async (prompt) => {
     return response.data.response;
   } catch (error) {
     console.error("Error fetching AI response:", error);
+    if (error.response?.data?.detail) {
+      return `AI service error: ${error.response.data.detail}`;
+    }
     return "Sorry, I couldn't connect to the AI service. Please ensure the backend server is running.";
   }
 };

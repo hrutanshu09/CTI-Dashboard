@@ -331,7 +331,17 @@ class RAGRetriever:
             return len(self._report_doc_indices.get(report_id, []))
 
 
-retriever = RAGRetriever()
+_retriever: Optional[RAGRetriever] = None
+_retriever_lock = threading.Lock()
+
+
+def _get_retriever() -> RAGRetriever:
+    global _retriever
+    if _retriever is None:
+        with _retriever_lock:
+            if _retriever is None:
+                _retriever = RAGRetriever()
+    return _retriever
 
 
 def retrieve_context(
@@ -341,7 +351,7 @@ def retrieve_context(
     strict_report: bool = False,
     retrieve_mode: str = "global",
 ):
-    return retriever.retrieve(
+    return _get_retriever().retrieve(
         query,
         k=k,
         report_id=report_id,
@@ -351,14 +361,14 @@ def retrieve_context(
 
 
 def add_documents_to_index(documents: List[Dict[str, Any]]) -> int:
-    return retriever.add_documents(documents)
+    return _get_retriever().add_documents(documents)
 
 
 def report_exists(report_id: str) -> bool:
-    return retriever.has_report(report_id)
+    return _get_retriever().has_report(report_id)
 
 
 def report_chunk_count(report_id: str) -> int:
-    return retriever.report_chunk_count(report_id)
+    return _get_retriever().report_chunk_count(report_id)
 
 

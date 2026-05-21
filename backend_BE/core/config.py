@@ -10,10 +10,12 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    LLM_PROVIDER: str = "gemini"
+    LLM_PROVIDER: str = "groq"
     OLLAMA_HOST: str = "http://localhost:11434"
     OLLAMA_MODEL: str = "llama3.2:3b"
     GEMINI_API_KEY: str | None = None
+    GROQ_API_KEY: str | None = None
+    GROQ_MODEL: str = "llama-3.3-70b-versatile"
     NVD_API_KEY: str | None = None
     GOOGLE_CLIENT_ID: str | None = None
     AUTH_SESSION_SECRET: str = "change-me-in-production"

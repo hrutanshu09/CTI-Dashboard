@@ -4,20 +4,25 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
+from openai import OpenAI
 
 # Load environment variables
 load_dotenv()
 
 # --- API Configuration ---
 NVD_API_KEY = os.getenv("NVD_API_KEY")
-OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434").rstrip("/")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2:3b")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+FRONTEND_ORIGINS = os.getenv(
+    "FRONTEND_ORIGINS",
+    "http://localhost:3000,http://127.0.0.1:3000",
+)
 
 # --- FastAPI App Initialization ---
 app = FastAPI()
 
-# Configure CORS to allow your React app to make requests
-origins = ["http://localhost:3000"]
+# Configure CORS to allow your frontend app to make requests
+origins = [origin.strip() for origin in FRONTEND_ORIGINS.split(",") if origin.strip()]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -40,20 +45,23 @@ class CVESummaryResponse(BaseModel):
     ai_summary: str
 
 
-async def generate_with_ollama(prompt: str) -> str:
+def _get_groq_client() -> OpenAI:
+    if not GROQ_API_KEY:
+        raise RuntimeError("GROQ_API_KEY is not configured")
+    return OpenAI(api_key=GROQ_API_KEY, base_url="https://api.groq.com/openai/v1")
+
+
+async def generate_with_groq(prompt: str) -> str:
     """
-    Sends a prompt to local Ollama and returns the generated text.
+    Sends a prompt to Groq and returns the generated text.
     """
-    payload = {
-        "model": OLLAMA_MODEL,
-        "prompt": prompt,
-        "stream": False
-    }
-    async with httpx.AsyncClient(timeout=90.0) as client:
-        response = await client.post(f"{OLLAMA_HOST}/api/generate", json=payload)
-        response.raise_for_status()
-        data = response.json()
-        return data.get("response", "").strip()
+    client = _get_groq_client()
+    response = client.chat.completions.create(
+        model=GROQ_MODEL,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.2,
+    )
+    return (response.choices[0].message.content or "").strip()
 
 
 # --- API Endpoints ---
@@ -88,7 +96,7 @@ async def get_cve_summary(cve_id: str):
         except (KeyError, IndexError):
             raise HTTPException(status_code=500, detail="Could not parse CVE data.")
 
-    # 2. Generate AI Summary with local Ollama model
+    # 2. Generate AI Summary with Groq model
     try:
         summary_prompt = (
             "You are a cybersecurity expert. Summarize the following CVE description in 2-3 sentences. "
@@ -98,10 +106,10 @@ async def get_cve_summary(cve_id: str):
             "Focus on the vulnerability type, potential impact, and key affected systems. Provide mitigation recommendations if applicable.\n\n"
             f"Description:\n\n{description}"
         )
-        ai_summary = await generate_with_ollama(summary_prompt)
+        ai_summary = await generate_with_groq(summary_prompt)
 
     except Exception as e:
-        print(f"Ollama error: {e}")
+        print(f"Groq error: {e}")
         ai_summary = "Could not generate an AI summary for this CVE."
 
     return {
@@ -115,14 +123,14 @@ async def get_cve_summary(cve_id: str):
 @app.post("/api/ai-assistant", response_model=AIResponse)
 async def ask_ai(request: AIRequest):
     """
-    Handles general AI assistant queries using local Ollama.
+    Handles general AI assistant queries using Groq.
     """
     try:
         cti_context = "You are an expert cybersecurity analyst for a CTI dashboard. Provide expansive, accurate threat intelligence based on the user's question."
         full_prompt = f"{cti_context}\n\nUser Question: {request.prompt}"
         
-        response = await generate_with_ollama(full_prompt)
+        response = await generate_with_groq(full_prompt)
         return {"response": response}
     except Exception as e:
         print(f"Error generating content: {e}")
-        raise HTTPException(status_code=500, detail="Error communicating with the local Ollama model.")
+        raise HTTPException(status_code=500, detail="Error communicating with the Groq model.")

@@ -1,0 +1,58 @@
+Title: Suspicious Multi-Stage Intrusion Attempt Against Finance Workstations
+Date: 2026-05-21
+Classification: Internal Use Only
+Severity: High
+
+Executive Summary
+On 2026-05-20, the SOC observed a suspicious intrusion attempt targeting multiple finance department endpoints. The activity began with a phishing email delivering a malicious link and progressed to PowerShell-based payload retrieval, credential harvesting, and outbound connections to known command-and-control infrastructure. The campaign appears opportunistic but well-structured and should be treated as an active threat.
+
+Observed Activity
+1. A user received an email from a lookalike domain, support-secure[.]com, with the subject line "Payroll Review Required".
+2. The embedded link redirected to hxxps://portal-support[.]com/update and delivered a JavaScript launcher.
+3. Endpoint telemetry captured powershell.exe spawning cmd.exe and downloading a secondary payload from 185.243.115.27.
+4. The payload attempted to contact api.cloudverify[.]net and exfiltrate authentication tokens.
+5. A suspicious archive named finance_patch_2026.zip was written to disk and executed from %AppData%.
+
+Indicators of Compromise
+- IP Address: 185.243.115.27
+- Domain: support-secure.com
+- Domain: portal-support.com
+- Domain: api.cloudverify.net
+- File Hash (SHA256): 7f9b2f0d1f3c6db7e8d7a0e1c5d4a9d8b6e1f2c3d4a5b6c7d8e9f0123456789
+- CVE Referenced in lure text: CVE-2024-3400
+- URL: hxxps://portal-support.com/update
+
+Affected Assets
+- FIN-WS-014
+- FIN-WS-019
+- FIN-WS-022
+
+Technical Details
+The malicious payload was downloaded via an encoded PowerShell command and executed in the context of the logged-in user. Process creation logs showed unusual parent-child relationships consistent with staging activity. The attacker attempted to enumerate browser credential stores and local token caches before initiating external connections. No confirmed data loss was observed, but lateral movement risk remains elevated.
+
+Likely Tactics and Techniques
+- Phishing
+- User Execution
+- PowerShell
+- Credential Access
+- Exfiltration Over C2 Channel
+
+Recommended Actions
+Immediate
+- Isolate affected endpoints from the network.
+- Block the domains support-secure.com, portal-support.com, and api.cloudverify.net at DNS and proxy layers.
+- Block the source IP 185.243.115.27 at perimeter controls.
+- Reset credentials for users who interacted with the email.
+
+Within 24 Hours
+- Search EDR telemetry for the SHA256 hash and related PowerShell command lines.
+- Review mail gateway logs for additional messages from the same sender pattern.
+- Hunt for CVE-2024-3400 references in user mailboxes and browser history.
+
+Within 7 Days
+- Validate patching and hardening on finance endpoints.
+- Improve email filtering rules for lookalike domains.
+- Add detections for encoded PowerShell, suspicious archive execution, and token theft behavior.
+
+Conclusion
+This incident should be treated as a high-priority intrusion attempt with potential credential theft and command-and-control activity. The environment should be monitored closely for repeated callback attempts, persistence mechanisms, and any signs of lateral movement.
