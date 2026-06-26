@@ -22,3 +22,4 @@
 2026-06-24T11:09:12Z soc_action analyst=a.singh action=disabled_account users="j.patel,svc_backup" status=completed
 2026-06-24T11:18:43Z edr host=FIN-WS-044 action=isolated reason="credential dumping and data exfiltration evidence" severity=Critical
 2026-06-24T11:27:30Z incident_summary incident_id=INC-2026-0624-044 category="credential theft and ransomware preparation" affected_assets="FIN-WS-044,FIN-WS-045,FILE-SRV-02,VPN-GW-01,MAIL-EXCH-01" business_impact="finance invoice data exposure and ransomware risk" priority=P1
+2026-06-24T11:27:30Z incident_summary incident_id=INC-2026-0624-044 category="credential theft and ransomware preparation" affected_assets="FIN-WS-044,FIN-WS-045,FILE-SRV-02,VPN-GW-01,MAIL-EXCH-01" business_impact="finance invoice data exposure and ransomware risk" priority=P1
