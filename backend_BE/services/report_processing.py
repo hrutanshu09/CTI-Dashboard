@@ -137,7 +137,7 @@ def process_report_chunks(
         logger.exception("Structured generation failed; using fallback analysis")
         model_json = {}
 
-    analysis = _postprocess_analysis(model_json, iocs, source_trace, anchor_chunk)
+    analysis = _postprocess_analysis(model_json, iocs, source_trace, anchor_chunk, full_text)
     severity = _parse_severity(str(analysis.get("severity", "Unknown")))
 
     return {
@@ -459,7 +459,106 @@ def _empty_analysis() -> Dict[str, Any]:
     }
 
 
-def _postprocess_analysis(model_json: Dict[str, Any], iocs: Dict[str, List[str]], source_trace: List[Dict[str, Any]], anchor_chunk: str) -> Dict[str, Any]:
+def _extract_mitre_techniques(text: str) -> List[str]:
+    return sorted(set(re.findall(r"\bT\d{4}(?:\.\d{3})?\b", text, flags=re.IGNORECASE)))
+
+
+def _fallback_detections(report_text: str, iocs: Dict[str, List[str]], source_trace: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    text = report_text.lower()
+    signals: List[str] = []
+
+    if "powershell" in text:
+        signals.append("Alert on PowerShell downloading or executing payloads from newly observed domains.")
+    if "phishing" in text or "fake" in text:
+        signals.append("Detect users submitting credentials to phishing or fake invoice/login portals.")
+    if "vpn" in text or "valid account" in text or "impossible travel" in text:
+        signals.append("Monitor successful VPN or identity-provider logins from new devices, impossible travel, or uncommon geographies.")
+    if "lsass" in text or "credential dumping" in text or "credential" in text:
+        signals.append("Alert on LSASS memory access, dump-file creation, and credential harvesting behavior.")
+    if "rdp" in text or "smb" in text or "admin$" in text or "lateral" in text:
+        signals.append("Hunt for lateral movement over RDP, SMB, ADMIN$ shares, WMIC, or remote service execution.")
+    if "exfil" in text or "archive" in text or "bytes_out" in text:
+        signals.append("Detect large archive creation followed by outbound transfer to external infrastructure.")
+    if "ransomware" in text or "encrypt" in text:
+        signals.append("Alert on ransomware staging scripts, encryption tooling, and suspicious writes to administrative shares.")
+
+    for domain in iocs.get("domains", [])[:3]:
+        signals.append(f"Block and alert on DNS/proxy connections to {domain}.")
+    for ip in iocs.get("ips", [])[:3]:
+        signals.append(f"Monitor firewall, proxy, VPN, and EDR telemetry for traffic involving {ip}.")
+    for cve in iocs.get("cves", [])[:3]:
+        signals.append(f"Prioritize exposure detections for assets vulnerable to {cve}.")
+    for technique in _extract_mitre_techniques(report_text)[:3]:
+        signals.append(f"Map detections to MITRE ATT&CK technique {technique}.")
+
+    return [
+        {"signal": signal, "source_ids": [], "source_scope": "report"}
+        for signal in _dedupe_strings(signals, limit=6)
+    ]
+
+
+def _fallback_actions(report_text: str, iocs: Dict[str, List[str]]) -> tuple[List[Dict[str, Any]], List[Dict[str, Any]], List[Dict[str, Any]]]:
+    indicators = iocs.get("ips", [])[:3] + iocs.get("domains", [])[:3]
+    cves = iocs.get("cves", [])[:4]
+
+    immediate = [
+        "Disable or reset credentials for affected users and revoke active sessions.",
+        "Isolate endpoints with credential dumping, suspicious PowerShell, or ransomware staging evidence.",
+    ]
+    if indicators:
+        immediate.append(f"Block confirmed malicious indicators across DNS, proxy, firewall, and EDR controls: {', '.join(indicators)}.")
+    if "ransomware" in report_text.lower() or "encrypt" in report_text.lower():
+        immediate.append("Pause risky administrative shares or remote execution paths until lateral movement is scoped.")
+
+    actions_24h = [
+        "Hunt across VPN, identity, EDR, proxy, email, and firewall logs for the same users, hosts, IPs, domains, hashes, and MITRE techniques.",
+        "Review persistence mechanisms including scheduled tasks, mailbox forwarding rules, new admin accounts, startup folders, and remote management tools.",
+    ]
+    if cves:
+        actions_24h.append(f"Identify and prioritize internet-facing assets exposed to {', '.join(cves)}.")
+
+    actions_7d = [
+        "Patch exposed systems, validate remediation, and add temporary compensating detections until patch rollout is complete.",
+        "Tune SIEM and EDR rules for the confirmed behavior chain and document the incident response playbook updates.",
+        "Run a credential hygiene review for privileged and service accounts touched during the incident.",
+    ]
+
+    def rows(values: List[str], limit: int) -> List[Dict[str, Any]]:
+        return [
+            {"action": value, "source_ids": [], "source_scope": "report"}
+            for value in _dedupe_strings(values, limit=limit)
+        ]
+
+    return rows(immediate, 5), rows(actions_24h, 5), rows(actions_7d, 5)
+
+
+def _fallback_threat_types(report_text: str) -> List[Dict[str, Any]]:
+    text = report_text.lower()
+    candidates = []
+    if "phishing" in text:
+        candidates.append(("Phishing and credential theft", "Report references phishing delivery, fake login portals, or captured credentials."))
+    if "ransomware" in text or "encrypt" in text:
+        candidates.append(("Ransomware preparation", "Report references encryption scripts, ransomware staging, or impact preparation."))
+    if "exfil" in text or "archive" in text:
+        candidates.append(("Data exfiltration", "Report references archive staging or outbound transfer of collected data."))
+    if "lateral" in text or "rdp" in text or "smb" in text or "admin$" in text:
+        candidates.append(("Lateral movement", "Report references remote access, SMB, RDP, ADMIN$ shares, or host-to-host expansion."))
+    if "cve-" in text:
+        candidates.append(("Vulnerability exploitation", "Report references CVEs and exposed systems requiring remediation."))
+
+    return [
+        {"type": threat_type, "evidence": evidence, "source_ids": [], "source_scope": "report"}
+        for threat_type, evidence in candidates[:4]
+    ]
+
+
+def _postprocess_analysis(
+    model_json: Dict[str, Any],
+    iocs: Dict[str, List[str]],
+    source_trace: List[Dict[str, Any]],
+    anchor_chunk: str,
+    full_text: str,
+) -> Dict[str, Any]:
     analysis = _empty_analysis()
 
     analysis["severity"] = _parse_severity(str(model_json.get("severity", "Unknown")))
@@ -482,9 +581,11 @@ def _postprocess_analysis(model_json: Dict[str, Any], iocs: Dict[str, List[str]]
         if "evidence" not in t or not t["evidence"]:
             t["evidence"] = "Evidence inferred from uploaded report context."
     analysis["threat_types"] = threat_types
+    if not analysis["threat_types"]:
+        analysis["threat_types"] = _fallback_threat_types(full_text)
     analysis["threat_type"] = "\n".join(
         f"- {t['type']}: {t.get('evidence', '')} [scope={t.get('source_scope', 'unknown')}]"
-        for t in threat_types
+        for t in analysis["threat_types"]
     ) or "Unknown"
 
     analysis["detections"] = _normalize_object_list(model_json.get("detections", []), "signal", source_trace, limit=6)
@@ -500,6 +601,16 @@ def _postprocess_analysis(model_json: Dict[str, Any], iocs: Dict[str, List[str]]
     analysis["actions_24h"] = actions_24h
     analysis["actions_7d"] = actions_7d
     analysis["actions_short_term"] = actions_24h + actions_7d
+
+    if not analysis["detections"]:
+        analysis["detections"] = _fallback_detections(full_text, iocs, source_trace)
+
+    if not analysis["actions_immediate"] and not analysis["actions_24h"] and not analysis["actions_7d"]:
+        fallback_immediate, fallback_24h, fallback_7d = _fallback_actions(full_text, iocs)
+        analysis["actions_immediate"] = fallback_immediate
+        analysis["actions_24h"] = fallback_24h
+        analysis["actions_7d"] = fallback_7d
+        analysis["actions_short_term"] = fallback_24h + fallback_7d
 
     top_iocs = []
     for ip in iocs.get("ips", [])[:4]:

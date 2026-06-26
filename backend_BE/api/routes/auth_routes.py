@@ -3,8 +3,6 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, HTTPException, Request, Response, status
-from google.auth.transport import requests as google_requests
-from google.oauth2 import id_token as google_id_token
 from pydantic import BaseModel
 
 from core.config import settings
@@ -14,8 +12,15 @@ from services.auth_service import auth_service
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
-class GoogleLoginRequest(BaseModel):
-    credential: str
+class SignupRequest(BaseModel):
+    email: str
+    password: str
+    name: str = ""
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
 
 
 def _cookie_kwargs(max_age: int = 0) -> dict:
@@ -31,31 +36,38 @@ def _cookie_kwargs(max_age: int = 0) -> dict:
     return kwargs
 
 
-@router.post("/google")
-def login_with_google(payload: GoogleLoginRequest, response: Response):
-    if not settings.GOOGLE_CLIENT_ID:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="GOOGLE_CLIENT_ID is not configured on the backend.",
-        )
-
-    try:
-        claims = google_id_token.verify_oauth2_token(
-            payload.credential,
-            google_requests.Request(),
-            settings.GOOGLE_CLIENT_ID,
-        )
-    except Exception as exc:  # noqa: BLE001
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Google credential.") from exc
-
-    if claims.get("iss") not in {"accounts.google.com", "https://accounts.google.com"}:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Google issuer.")
-
-    user = auth_service.upsert_google_user(claims)
-    session_token, expires_at = auth_service.create_session(user_id=int(user["id"]))
-
+def _set_session_cookie(response: Response, user_id: int) -> None:
+    session_token, expires_at = auth_service.create_session(user_id=user_id)
     max_age = int((expires_at - datetime.now(UTC)).total_seconds())
     response.set_cookie(**_cookie_kwargs(max_age=max(1, max_age)), value=session_token)
+
+
+@router.post("/signup")
+def signup(payload: SignupRequest, response: Response):
+    try:
+        user = auth_service.create_local_user(
+            email=payload.email,
+            password=payload.password,
+            name=payload.name,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+    _set_session_cookie(response, user_id=int(user["id"]))
+
+    return {
+        "user": user,
+        "authenticated": True,
+    }
+
+
+@router.post("/login")
+def login(payload: LoginRequest, response: Response):
+    user = auth_service.authenticate_local_user(payload.email, payload.password)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password.")
+
+    _set_session_cookie(response, user_id=int(user["id"]))
 
     return {
         "user": user,

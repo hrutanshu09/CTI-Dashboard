@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { getCurrentUser, loginWithGoogle, logoutUser } from '../services/auth';
+import { getCurrentUser, loginUser, logoutUser, signupUser } from '../services/auth';
 
 const AuthContext = createContext(null);
 
@@ -33,8 +33,14 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
-  const signInWithGoogleCredential = async (credential) => {
-    const data = await loginWithGoogle(credential);
+  const login = async (credentials) => {
+    const data = await loginUser(credentials);
+    setUser(data.user || null);
+    return data.user || null;
+  };
+
+  const signup = async (credentials) => {
+    const data = await signupUser(credentials);
     setUser(data.user || null);
     return data.user || null;
   };
@@ -52,7 +58,8 @@ export const AuthProvider = ({ children }) => {
       user,
       authenticated: Boolean(user),
       authLoading,
-      signInWithGoogleCredential,
+      login,
+      signup,
       logout,
     }),
     [user, authLoading]

@@ -3,7 +3,7 @@ from typing import Literal, Optional
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from pydantic import BaseModel
 
-from services.rag_services import analyze_threat
+from services.rag_services import answer_followup_question
 from services.report_processing import (
     chunk_report,
     ingest_report_into_global_kb,
@@ -31,6 +31,7 @@ class ReportQuery(BaseModel):
     query: str
     report_id: Optional[str] = None
     mode: Literal["hybrid", "report_only", "global_only"] = "hybrid"
+    processed_context: str = ""
 
 
 def _extract_pdf_text(raw_bytes: bytes) -> str:
@@ -145,9 +146,11 @@ async def query_threat_report(payload: ReportQuery):
     }[payload.mode]
 
     try:
-        result = analyze_threat(
+        result = answer_followup_question(
             payload.query,
+            processed_context=payload.processed_context,
             report_id=payload.report_id,
+            strict_report=payload.mode == "report_only",
             retrieve_mode=retrieve_mode,
         )
         return {

@@ -446,9 +446,12 @@ export const analyzeLogFile = async (file) => {
     }
 };
 
-export const queryLogInsights = async (query) => {
+export const queryLogInsights = async (query, processedContext = '') => {
   try {
-    const response = await axios.post(`${LOG_API_BASE_URL}/logs/query`, { query });
+    const response = await axios.post(`${LOG_API_BASE_URL}/logs/query`, {
+      query,
+      processed_context: processedContext,
+    });
     return response.data;
   } catch (error) {
     console.error("Error querying log insights:", error);
@@ -483,8 +486,8 @@ export const analyzeThreatReportFile = async (file) => {
   }
 };
 
-export const queryThreatReportInsights = async ({ query, reportId, mode = 'hybrid' }) => {
-  const payload = { query, mode };
+export const queryThreatReportInsights = async ({ query, reportId, mode = 'hybrid', processedContext = '' }) => {
+  const payload = { query, mode, processed_context: processedContext };
   if (mode !== 'global_only' && reportId) {
     payload.report_id = reportId;
   }

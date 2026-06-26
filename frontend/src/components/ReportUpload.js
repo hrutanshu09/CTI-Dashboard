@@ -78,6 +78,7 @@ const ReportUpload = () => {
         query: query.trim(),
         reportId,
         mode,
+        processedContext: buildProcessedContext(),
       });
 
       const responseText =
@@ -107,6 +108,34 @@ const ReportUpload = () => {
   const actionsImmediate = Array.isArray(analysis.actions_immediate) ? analysis.actions_immediate : [];
   const actions24h = Array.isArray(analysis.actions_24h) ? analysis.actions_24h : [];
   const actions7d = Array.isArray(analysis.actions_7d) ? analysis.actions_7d : [];
+
+  const buildProcessedContext = () => {
+    const lines = [];
+    lines.push('Processed threat report analysis:');
+    lines.push(`Severity: ${analysisPayload?.severity || analysis.severity || 'unknown'}`);
+    if (summaryLines.length) lines.push(`Summary: ${summaryLines.join(' ')}`);
+    if (threatTypes.length) {
+      lines.push(`Threat types: ${threatTypes.map((t) => `${t.type}: ${t.evidence || ''}`).join(' | ')}`);
+    }
+    if (detections.length) {
+      lines.push(`Detection signals: ${detections.map((d) => d.signal).join(' | ')}`);
+    }
+    if (topIocs.length) {
+      lines.push(`Top IOCs: ${topIocs.map((ioc) => `${ioc.indicator} (${ioc.type})`).join(', ')}`);
+    }
+    if (topCves.length) {
+      lines.push(`Top CVEs: ${topCves.map((cve) => cve.cve).join(', ')}`);
+    }
+
+    const actions = [
+      ...actionsImmediate.map((a) => `Immediate: ${a.action}`),
+      ...actions24h.map((a) => `24h: ${a.action}`),
+      ...actions7d.map((a) => `7d: ${a.action}`),
+    ];
+    if (actions.length) lines.push(`Prioritized actions: ${actions.join(' | ')}`);
+
+    return lines.join('\n').slice(0, 9000);
+  };
 
   return (
     <div className="bg-panel p-6 rounded-lg border border-border h-full flex flex-col">

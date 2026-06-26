@@ -40,3 +40,36 @@ Rules:
 """
 
     return textwrap.dedent(prompt)
+
+
+def build_chat_rag_prompt(query, retrieved_docs, processed_context=""):
+    retrieved_context = "\n\n".join(
+        f"[Retrieved {i+1}] {doc.get('text', '')}"
+        for i, doc in enumerate(retrieved_docs)
+        if isinstance(doc, dict)
+    )
+
+    prompt = f"""
+You are a concise SOC chatbot for a CTI dashboard.
+
+Answer the user's question using the uploaded/processed report context first.
+Use retrieved context only when it helps.
+Do not force a fixed report structure.
+Do not invent facts. If the available context is insufficient, say so briefly.
+
+Keep the answer short:
+- Prefer 2-5 sentences, or up to 5 bullets if a list is clearer.
+- Be direct and operational.
+- Avoid long explanations and generic cybersecurity advice.
+
+PROCESSED UPLOAD CONTEXT:
+{processed_context}
+
+RETRIEVED CONTEXT:
+{retrieved_context}
+
+USER QUESTION:
+{query}
+"""
+
+    return textwrap.dedent(prompt)

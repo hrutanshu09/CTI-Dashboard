@@ -33,6 +33,27 @@ const LogUpload = () => {
     }
   };
 
+  const buildProcessedContext = () => {
+    const rows = [];
+    rows.push('Processed log analysis summary:');
+    rows.push(`Detected rows: ${results.length}`);
+    iocDetails.slice(0, 8).forEach((item, index) => {
+      rows.push(
+        [
+          `${index + 1}. IOC: ${item.indicator}`,
+          `Type: ${item.iocType}`,
+          `Severity: ${item.topSeverity}`,
+          `Occurrences: ${item.occurrences}`,
+          `Sources: ${(item.sources || []).join(', ') || 'unknown'}`,
+          `Affected assets: ${(item.affectedAssets || item.relatedIps || []).join(', ') || 'not extracted'}`,
+          `What happened: ${item.whatHappened || item.stakeholderSummary || ''}`,
+          `Action plan: ${(item.actionPlan || []).join(' ')}`,
+        ].join(' | ')
+      );
+    });
+    return rows.join('\n').slice(0, 9000);
+  };
+
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -66,7 +87,7 @@ const LogUpload = () => {
     setModuleState({ queryResponse: '', queryError: '' });
 
     try {
-      const data = await queryLogInsights(query.trim());
+      const data = await queryLogInsights(query.trim(), buildProcessedContext());
       const responseText =
         data?.response?.response ||
         data?.response ||

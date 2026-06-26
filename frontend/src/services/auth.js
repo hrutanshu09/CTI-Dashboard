@@ -11,8 +11,13 @@ const authClient = axios.create({
   withCredentials: true,
 });
 
-export const loginWithGoogle = async (credential) => {
-  const response = await authClient.post('/auth/google', { credential });
+export const loginUser = async ({ email, password }) => {
+  const response = await authClient.post('/auth/login', { email, password });
+  return response.data;
+};
+
+export const signupUser = async ({ name, email, password }) => {
+  const response = await authClient.post('/auth/signup', { name, email, password });
   return response.data;
 };
 

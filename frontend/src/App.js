@@ -8,6 +8,7 @@ import ThreatIntelPage from './pages/ThreatIntelPage';
 import LogAnalyzerPage from './pages/LogAnalyzerPage';
 import ReportingPage from './pages/ReportingPage';
 import LoginPage from './pages/LoginPage';
+import SettingsPage from './pages/SettingsPage';
 import { useAuth } from './context/AuthContext';
 
 const SIDEBAR_STORAGE_KEY = 'cti_sidebar_collapsed_v1';
@@ -40,7 +41,7 @@ const AppShell = () => {
             <Route path="/threat-intel" element={<ThreatIntelPage />} />
             <Route path="/log-analyzer" element={<LogAnalyzerPage />} />
             <Route path="/reporting" element={<ReportingPage />} />
-            <Route path="/settings" element={<div className="p-6"><h1 className="text-2xl font-bold">Settings Page</h1></div>} />
+            <Route path="/settings" element={<SettingsPage />} />
           </Routes>
         </main>
       </div>

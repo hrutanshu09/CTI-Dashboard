@@ -1,0 +1,82 @@
+FlashCTI Threat Intelligence Report
+Campaign: SilentLedger Credential Theft and Ransomware Preparation
+Report Date: 2026-06-26
+Confidence: High
+Severity: Critical
+
+Executive Summary
+SilentLedger is an intrusion campaign targeting finance and logistics organizations through phishing, exposed VPN services, and post-exploitation credential harvesting. The activity begins with spear-phishing emails that link to fake invoice portals hosted on compromised domains. After initial access, the operators deploy remote monitoring tooling, enumerate Active Directory, collect browser credentials, and stage ransomware deployment scripts.
+
+Observed Infrastructure
+- Command and control domain: ledger-update-sync.com
+- Secondary command and control domain: secure-billing-gateway.net
+- Phishing URL: hxxps://invoice-ledger-update.com/login
+- Staging URL: hxxps://cdn-ledger-update.com/payloads/audit_client.exe
+- External IP: 185.199.110.153
+- External IP: 45.83.64.21
+- External IP: 91.240.118.172
+- Malware SHA256: a2f4c9d7b5e1234567890abcdef1234567890abcdef1234567890abcdef1234
+- Loader MD5: 44d88612fea8a8f36de82e1278abb02f
+
+Initial Access
+The campaign uses phishing emails with subjects such as "Updated Ledger Audit Notice" and "Invoice Reconciliation Required". Users are redirected to a fake Microsoft sign-in page. Captured credentials are reused against VPN and cloud mail portals. Several successful logins were observed from IP address 45.83.64.21 shortly after credential submission.
+
+Exploitation and Vulnerabilities
+The operators scan for exposed systems vulnerable to CVE-2023-34362, CVE-2024-3400, and CVE-2023-23397. Where vulnerable VPN or mail services are found, the attackers attempt remote code execution or credential relay. Impacted systems should be checked for abnormal web shell creation, suspicious scheduled tasks, and unauthorized mailbox forwarding rules.
+
+MITRE ATT&CK Mapping
+- T1566.002: Phishing via malicious links
+- T1078: Valid accounts
+- T1059.001: PowerShell command execution
+- T1003.001: LSASS memory credential dumping
+- T1018: Remote system discovery
+- T1021.001: Remote Desktop Protocol
+- T1041: Exfiltration over command and control channel
+- T1486: Data encrypted for impact
+
+Attack Timeline
+2026-06-24 08:14 UTC: Phishing emails delivered to finance users.
+2026-06-24 08:22 UTC: User credential submitted to hxxps://invoice-ledger-update.com/login.
+2026-06-24 08:31 UTC: VPN login from 45.83.64.21 using the compromised account j.patel.
+2026-06-24 08:44 UTC: PowerShell executed encoded command that downloaded audit_client.exe.
+2026-06-24 09:02 UTC: Host FIN-WS-044 connected to ledger-update-sync.com.
+2026-06-24 09:18 UTC: Active Directory group and domain trust enumeration observed.
+2026-06-24 09:42 UTC: Suspicious access to LSASS memory detected on FIN-WS-044.
+2026-06-24 10:05 UTC: Data staged in C:\ProgramData\LedgerCache\archive.zip.
+2026-06-24 10:18 UTC: Outbound transfer to 185.199.110.153 over TCP 443.
+2026-06-24 10:44 UTC: Ransomware preparation script copied to ADMIN$ shares.
+
+Detection Signals
+- Signal: Email gateway detects malicious links to invoice-ledger-update.com with phishing subject lines.
+- Signal: Proxy detects credential submission to hxxps://invoice-ledger-update.com/login followed by VPN login from 45.83.64.21.
+- Signal: EDR detects WINWORD.EXE spawning hidden PowerShell that downloads audit_client.exe from cdn-ledger-update.com.
+- Signal: EDR detects rundll32.exe dumping LSASS memory to C:\ProgramData\debug.dmp.
+- Signal: Windows security logs detect domain enumeration commands such as nltest /domain_trusts and net group "Domain Admins" /domain.
+- Signal: Firewall detects large outbound transfer from FIN-WS-044 to 185.199.110.153 over TCP 443.
+- Signal: SMB logs detect write activity to ADMIN$ shares and staging of encrypt_stage.ps1.
+- Signal: Vulnerability scanner detects internet-facing VPN-GW-01 vulnerable to CVE-2024-3400 and MAIL-EXCH-01 vulnerable to CVE-2023-23397.
+
+Prioritized Action Plan
+Immediate Actions
+- Disable compromised users j.patel and svc_backup, revoke sessions, and rotate credentials.
+- Isolate FIN-WS-044 and FIN-WS-045 from the network for forensic acquisition.
+- Block ledger-update-sync.com, secure-billing-gateway.net, invoice-ledger-update.com, cdn-ledger-update.com, 45.83.64.21, 91.240.118.172, and 185.199.110.153.
+- Quarantine audit_client.exe and any file matching SHA256 a2f4c9d7b5e1234567890abcdef1234567890abcdef1234567890abcdef1234.
+- Stop suspected ransomware staging by disabling unauthorized remote execution and ADMIN$ write access.
+
+24 Hour Actions
+- Hunt across VPN, email, proxy, EDR, firewall, Active Directory, and file server logs from 2026-06-24 08:00 UTC onward.
+- Review mailbox forwarding rules, newly created admin accounts, scheduled tasks, startup folders, and remote management tools.
+- Identify all assets exposed to CVE-2023-34362, CVE-2024-3400, and CVE-2023-23397.
+- Validate whether C:\ProgramData\LedgerCache\archive.zip was exfiltrated and determine impacted data owners.
+- Add SIEM detections for PowerShell download cradles, LSASS dump creation, impossible travel, and outbound transfer to listed infrastructure.
+
+7 Day Actions
+- Patch internet-facing VPN and mail systems and confirm remediation with authenticated vulnerability scans.
+- Reset privileged and service account credentials that may have been exposed during lateral movement.
+- Tune EDR prevention for credential dumping, remote execution, and ransomware staging behavior.
+- Conduct phishing awareness follow-up for targeted finance users and tighten email gateway rules.
+- Update the incident response playbook with confirmed IOCs, MITRE techniques, containment actions, and lessons learned.
+
+Business Impact
+The campaign presents high risk of credential theft, data exfiltration, lateral movement, and ransomware deployment. Finance operations, invoice processing, customer billing records, and domain identity systems are most exposed. Rapid containment should prioritize identity controls and endpoints that show credential dumping or remote administration activity.

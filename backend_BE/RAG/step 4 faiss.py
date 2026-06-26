@@ -12,29 +12,34 @@ CHUNKS_PATH = os.path.join(STORE_DIR, "chunked_docs.pkl")
 INDEX_PATH = os.path.join(STORE_DIR, "faiss.index")
 META_PATH = os.path.join(STORE_DIR, "doc_mapping.pkl")
 
-with open(EMBED_PKL_PATH, "rb") as f:
-    data = pickle.load(f)
-
-# Some previous steps persisted a dict like {"embeddings": array, "documents": [...]}
-if isinstance(data, dict):
-    embeddings = data.get("embeddings", data)
+if os.path.exists(EMBED_PATH):
+    embeddings = np.load(EMBED_PATH).astype("float32")
 else:
-    embeddings = data
+    with open(EMBED_PKL_PATH, "rb") as f:
+        data = pickle.load(f)
 
-embeddings = np.array(embeddings, dtype="float32")
+    # Some previous steps persisted a dict like {"embeddings": array, "documents": [...]}
+    if isinstance(data, dict):
+        embeddings = data.get("embeddings", data)
+    else:
+        embeddings = data
 
-np.save(EMBED_PATH, embeddings)
-
-print("Saved embeddings.npy with shape:", embeddings.shape)
-
-# Load embeddings
-embeddings = np.load(EMBED_PATH).astype("float32")
+    embeddings = np.array(embeddings, dtype="float32")
+    np.save(EMBED_PATH, embeddings)
+    print("Saved embeddings.npy with shape:", embeddings.shape)
 
 # Load chunk metadata
 with open(CHUNKS_PATH, "rb") as f:
     chunked_docs = pickle.load(f)
 
 print("Embeddings shape:", embeddings.shape)
+print("Chunked docs:", len(chunked_docs))
+
+if embeddings.shape[0] != len(chunked_docs):
+    raise RuntimeError(
+        f"Embeddings/documents mismatch: embeddings={embeddings.shape[0]}, docs={len(chunked_docs)}. "
+        "Regenerate embeddings before rebuilding FAISS."
+    )
 
 # Build FAISS index
 dimension = embeddings.shape[1]

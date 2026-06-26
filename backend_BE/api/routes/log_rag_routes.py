@@ -1,7 +1,7 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from services.log_rag_service import process_log_text
 from pydantic import BaseModel
-from services.rag_services import analyze_threat
+from services.rag_services import answer_followup_question
 from striprtf.striprtf import rtf_to_text
 from utils.log_processing import normalize_logs, chunk_logs,process_log_chunks
 from services.dashboard_metrics_service import metrics_store
@@ -14,6 +14,7 @@ SUPPORTED_TYPES = [".log", ".txt", ".rtf", ".csv"]
 
 class LogQuery(BaseModel):
     query: str
+    processed_context: str = ""
 
 '''@router.post("/analyze")
 async def analyze_log(file: UploadFile = File(...)):
@@ -85,6 +86,10 @@ async def analyze_log(file: UploadFile = File(...)):
 @router.post("/query")
 async def query_logs(payload: LogQuery):
 
-    result = analyze_threat(payload.query)
+    result = answer_followup_question(
+        payload.query,
+        processed_context=payload.processed_context,
+        retrieve_mode="global",
+    )
 
     return {"response": result}

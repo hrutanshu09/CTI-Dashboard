@@ -17,7 +17,6 @@ class Settings(BaseSettings):
     GROQ_API_KEY: str | None = None
     GROQ_MODEL: str = "llama-3.3-70b-versatile"
     NVD_API_KEY: str | None = None
-    GOOGLE_CLIENT_ID: str | None = None
     AUTH_SESSION_SECRET: str = "change-me-in-production"
     AUTH_COOKIE_NAME: str = "cti_session"
     AUTH_COOKIE_SECURE: bool = False
