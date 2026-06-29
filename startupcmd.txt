@@ -1,0 +1,3 @@
+PS D:\BE Project\CTI-Dashboard\frontend> npm.cmd start
+PS D:\BE Project\CTI-Dashboard\backend> python -m uvicorn main:app --host 127.0.0.1 --port 8000 --reload
+PS D:\BE Project\CTI-Dashboard\backend_BE> py -3.11 -m uvicorn main:app --host 127.0.0.1 --port 8001 --reload

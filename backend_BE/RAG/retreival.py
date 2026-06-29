@@ -38,9 +38,18 @@ class RAGRetriever:
 
     def _initialize(self):
         self._rw_lock = threading.RLock()
-        self.index = self._load_faiss_index()
-        self.documents = self._load_documents()
         self.model = self._load_embedding_model()
+
+        if not self._has_persisted_store():
+            logger.warning(
+                "RAG store not found at %s; initializing an empty retriever.",
+                STORE_DIR,
+            )
+            self.index = faiss.IndexFlatL2(self.model.get_sentence_embedding_dimension())
+            self.documents = []
+        else:
+            self.index = self._load_faiss_index()
+            self.documents = self._load_documents()
 
         if self.index.ntotal != len(self.documents):
             raise RuntimeError(
@@ -55,6 +64,12 @@ class RAGRetriever:
         if not os.path.exists(INDEX_PATH):
             raise FileNotFoundError(f"FAISS index missing: {INDEX_PATH}")
         return faiss.read_index(INDEX_PATH)
+
+    def _has_persisted_store(self) -> bool:
+        return (
+            os.path.exists(INDEX_PATH)
+            and (os.path.exists(DOC_MAPPING_PATH) or os.path.exists(LEGACY_DOC_PATH))
+        )
 
     def _load_documents(self):
         candidate_paths = []
